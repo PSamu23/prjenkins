@@ -1,0 +1,14 @@
+stage('Pruebas') {
+    steps {
+        echo "Fusionando cambios en pruebas y desplegando..."
+        script {
+            sh '''
+            git checkout pruebas
+            git merge desarrollo
+            git push origin pruebas
+            '''
+        }
+        echo "Desplegando en servidor de pruebas..."
+        sh 'cp -r ./ /var/www/pruebas/'
+    }
+}
