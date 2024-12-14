@@ -65,7 +65,9 @@ pipeline {
             else
                 echo "No hay respaldos disponibles para restaurar"
             fi
+             echo $(date) FAILURE >> ${LOG_FILE}
             '''
+            
         }
     }
 }
