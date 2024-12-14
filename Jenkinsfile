@@ -51,7 +51,10 @@ pipeline {
                     '''
                 }
                 echo "Desplegando en servidor de pruebas..."
-                
+                sh '''
+                cp -r ./ ${TEST_DIR}
+                echo "Despliegue completado en pruebas" >> ${LOG_FILE}
+                '''
             }
         }
 
