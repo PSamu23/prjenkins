@@ -2,8 +2,11 @@ pipeline {
     agent any
 
     environment {
-        // Configuración de credenciales y repositorio
         REPO_URL = 'https://github.com/PSamu23/prjenkins.git'
+        BACKUP_DIR = "/var/www/backups"
+        PROD_DIR = "/var/www/produccion"
+        TEST_DIR = "/var/www/pruebas"
+        LOG_FILE = "/var/log/jenkins/pipeline.log"
     }
 
     stages {
@@ -26,6 +29,13 @@ pipeline {
                     git config --global user.email "samuelespinal90@gmail.com"
                     git config --global user.name "PSamu23"
                 '''
+            }
+        }
+
+        stage('Preparar entorno') {
+            steps {
+                echo 'Preparando entorno de trabajo...'
+                sh 'mkdir -p ${BACKUP_DIR} ${PROD_DIR} ${TEST_DIR}'
             }
         }
 
@@ -58,6 +68,7 @@ pipeline {
                         git pull origin desarrollo || echo "Error al actualizar desarrollo"
                     '''
                 }
+                sh "echo 'Integración completada en desarrollo' >> ${LOG_FILE}"
             }
         }
 
@@ -73,6 +84,11 @@ pipeline {
                         '''
                     }
                 }
+                echo 'Desplegando en servidor de pruebas...'
+                sh '''
+                    cp -r ./ ${TEST_DIR}
+                    echo "Despliegue completado en pruebas" >> ${LOG_FILE}
+                '''
             }
         }
 
@@ -93,6 +109,12 @@ pipeline {
                         '''
                     }
                 }
+                echo 'Creando respaldo antes del despliegue...'
+                sh '''
+                    tar -czf ${BACKUP_DIR}/backup_$(date +%Y%m%d_%H%M%S).tar.gz ${PROD_DIR}
+                    cp -r ./ ${PROD_DIR}
+                    echo "Despliegue completado en producción" >> ${LOG_FILE}
+                '''
             }
         }
     }
@@ -100,16 +122,20 @@ pipeline {
     post {
         failure {
             echo 'Pipeline fallido. Restaurando último respaldo...'
-            script {
-                sh '''
-                    if [ -d /var/www/backups ] && [ "$(ls -A /var/www/backups)" ]; then
-                        echo "Restaurando respaldo..."
-                        # Comando para restaurar respaldo
-                    else
-                        echo "No hay respaldos disponibles para restaurar"
-                    fi
-                '''
-            }
+            sh '''
+                LATEST_BACKUP=$(ls -t ${BACKUP_DIR} | head -n 1)
+                if [ -n "$LATEST_BACKUP" ]; then
+                    echo "Restaurando desde backup: $LATEST_BACKUP" >> ${LOG_FILE}
+                    tar -xzf ${BACKUP_DIR}/$LATEST_BACKUP -C ${PROD_DIR}
+                    echo "Restauración completada desde $LATEST_BACKUP" >> ${LOG_FILE}
+                else
+                    echo "No hay respaldos disponibles para restaurar" >> ${LOG_FILE}
+                fi
+            '''
+        }
+        success {
+            echo 'Pipeline completado exitosamente.'
+            sh "echo 'Pipeline ejecutado exitosamente' >> ${LOG_FILE}"
         }
     }
 }
