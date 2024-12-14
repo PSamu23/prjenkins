@@ -21,9 +21,19 @@ pipeline {
             }
         }
 
-        stage('Checkout') {
+        stage('Sync Ramas Locales') {
             steps {
-                checkout scm
+                script {
+                    sh '''
+                    git fetch origin
+                    git checkout pruebas
+                    git reset --hard origin/pruebas
+                    git checkout desarrollo
+                    git reset --hard origin/desarrollo
+                    git checkout main
+                    git reset --hard origin/main
+                    '''
+                }
             }
         }
 
@@ -46,9 +56,11 @@ pipeline {
                 script {
                     sh '''
                     git checkout pruebas
-                    git merge desarrollo
-                    git add .
-        git commit -m "Automated commit from Jenkins pipeline"
+                    git merge desarrollo || exit 1
+                    if ! git diff-index --quiet HEAD; then
+                        git add .
+                        git commit -m "Automated commit from Jenkins pipeline"
+                    fi
                     git push origin pruebas
                     '''
                 }
@@ -85,8 +97,8 @@ pipeline {
             echo "Pipeline fallido. Restaurando último respaldo..."
             script {
                 sh '''
-                LATEST_BACKUP=$(ls -t ${BACKUP_DIR} | head -n 1)
-                if [ -n "$LATEST_BACKUP" ]; then
+                if [ -d "${BACKUP_DIR}" ] && [ "$(ls -A ${BACKUP_DIR})" ]; then
+                    LATEST_BACKUP=$(ls -t ${BACKUP_DIR} | head -n 1)
                     echo "Restaurando desde backup: $LATEST_BACKUP" >> ${LOG_FILE}
                     tar -xzf ${BACKUP_DIR}/$LATEST_BACKUP -C ${PROD_DIR}
                     echo "Restauración completada desde $LATEST_BACKUP" >> ${LOG_FILE}
