@@ -47,6 +47,8 @@ pipeline {
                     sh '''
                     git checkout pruebas
                     git merge desarrollo
+                    git add .
+        git commit -m "Automated commit from Jenkins pipeline"
                     git push origin pruebas
                     '''
                 }
