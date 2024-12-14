@@ -9,10 +9,21 @@ pipeline {
     }
 
     stages {
-        stage('Preparar entorno') {
+        stage('Setup') {
             steps {
-                echo "Preparando entorno de trabajo..."
-                sh 'mkdir -p ${BACKUP_DIR} ${PROD_DIR} ${TEST_DIR}'
+                echo "Configurando credenciales de Git..."
+                script {
+                    sh '''
+                        git config --global user.email "samuelespinal90@gmail.com"
+                        git config --global user.name "PSamu23"
+                    '''
+                }
+            }
+        }
+
+        stage('Checkout') {
+            steps {
+                checkout scm
             }
         }
 
@@ -26,22 +37,6 @@ pipeline {
                     '''
                 }
                 sh "echo 'Integración completada en desarrollo' >> ${LOG_FILE}"
-            }
-        }
-
-        stage('Setup') {
-            steps {
-                echo "Configurando credenciales de Git..."
-                sh '''
-                    git config --global user.email "samuelespinal90@gmail.com"
-                    git config --global user.name "PSamue23"
-                '''
-            }
-        }
-
-        stage('Checkout') {
-            steps {
-                checkout scm
             }
         }
 
@@ -86,20 +81,24 @@ pipeline {
     post {
         failure {
             echo "Pipeline fallido. Restaurando último respaldo..."
-            sh '''
-            LATEST_BACKUP=$(ls -t ${BACKUP_DIR} | head -n 1)
-            if [ -n "$LATEST_BACKUP" ]; then
-                echo "Restaurando desde backup: $LATEST_BACKUP" >> ${LOG_FILE}
-                tar -xzf ${BACKUP_DIR}/$LATEST_BACKUP -C ${PROD_DIR}
-                echo "Restauración completada desde $LATEST_BACKUP" >> ${LOG_FILE}
-            else
-                echo "No hay respaldos disponibles para restaurar" >> ${LOG_FILE}
-            fi
-            '''
+            script {
+                sh '''
+                LATEST_BACKUP=$(ls -t ${BACKUP_DIR} | head -n 1)
+                if [ -n "$LATEST_BACKUP" ]; then
+                    echo "Restaurando desde backup: $LATEST_BACKUP" >> ${LOG_FILE}
+                    tar -xzf ${BACKUP_DIR}/$LATEST_BACKUP -C ${PROD_DIR}
+                    echo "Restauración completada desde $LATEST_BACKUP" >> ${LOG_FILE}
+                else
+                    echo "No hay respaldos disponibles para restaurar" >> ${LOG_FILE}
+                fi
+                '''
+            }
         }
         success {
-            echo "Pipeline completado exitosamente." 
-            sh "echo 'Pipeline ejecutado exitosamente' >> ${LOG_FILE}"
+            echo "Pipeline completado exitosamente."
+            script {
+                sh "echo 'Pipeline ejecutado exitosamente' >> ${LOG_FILE}"
+            }
         }
     }
 }
