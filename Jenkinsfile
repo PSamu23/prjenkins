@@ -13,7 +13,7 @@ pipeline {
                     branches: [[name: '*/main']], 
                     userRemoteConfigs: [[
                         url: REPO_URL,
-                        credentialsId: 'github-token-psamu23'
+                        credentialsId: 'github-token-psamu231'
                     ]]
                 ])
             }
