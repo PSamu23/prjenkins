@@ -13,7 +13,7 @@ pipeline {
                     branches: [[name: '*/main']], 
                     userRemoteConfigs: [[
                         url: REPO_URL,
-                        credentialsId: 'github-token-psamu231'
+                        credentialsId: 'github-token-psamu23111'
                     ]]
                 ])
             }
@@ -65,7 +65,7 @@ pipeline {
             steps {
                 echo 'Fusionando cambios en pruebas y desplegando...'
                 script {
-                    withCredentials([string(credentialsId: 'github-token-psamu231', variable: 'GIT_TOKEN')]) {
+                    withCredentials([string(credentialsId: 'github-token-psamu23111', variable: 'GIT_TOKEN')]) {
                         sh '''
                             git checkout pruebas
                             git merge desarrollo || echo "Conflictos al fusionar desarrollo en pruebas"
@@ -85,7 +85,7 @@ pipeline {
             steps {
                 echo 'Fusionando cambios en producción y desplegando...'
                 script {
-                    withCredentials([string(credentialsId: 'github-token-psamu231', variable: 'GIT_TOKEN')]) {
+                    withCredentials([string(credentialsId: 'github-token-psamu23111', variable: 'GIT_TOKEN')]) {
                         sh '''
                             git checkout main
                             git merge pruebas || echo "Conflictos al fusionar pruebas en main"
