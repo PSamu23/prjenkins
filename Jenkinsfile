@@ -1,20 +1,6 @@
 pipeline {
     agent any
 
-    node {
-    stage('Checkout') {
-        checkout scm
-        sh '''
-            git config --global user.email "samuelespinal90@gmail.com"
-            git config --global user.name "PSamu23"
-        '''
-    }
-    stage('Deploy') {
-        sh 'git push origin pruebas'
-    }
-}
-
-
     environment {
         BACKUP_DIR = "/var/www/backups"
         PROD_DIR = "/var/www/produccion"
@@ -40,6 +26,22 @@ pipeline {
                     '''
                 }
                 sh "echo 'Integración completada en desarrollo' >> ${LOG_FILE}"
+            }
+        }
+
+        stage('Setup') {
+            steps {
+                echo "Configurando credenciales de Git..."
+                sh '''
+                    git config --global user.email "samuelespinal90@gmail.com"
+                    git config --global user.name "PSamue23"
+                '''
+            }
+        }
+
+        stage('Checkout') {
+            steps {
+                checkout scm
             }
         }
 
